@@ -70,13 +70,28 @@ app.post("/enviarDocumento/", async (req, res) => {
 })
 
 app.post("/receberDocumento/", async (req, res) => {
-    await bd.receberDocumento(req.body);
-    res.sendStatus(201);
+    if (req.body.setor_envio_id != req.body.setor_recebe_id & req.body.setor_envio_id != null){
+        await bd.receberDocumento(req.body);
+        res.sendStatus(201);
+    }else{
+        res.sendStatus(400);
+    }
+    
 })
 
 app.get("/tramitacaoDocumento", async (req, res) => {
     const cliente = await bd.listarTramitacaoDocumento();
     res.json(cliente);
+})
+
+//Em desenvolvimento a validação antes de enviar um documento
+app.post("/enviarDocumentoRegra/", async (req, res) => {
+    cliente = await bd.enviarDocumentoRegra(req.body);
+    if (cliente = true){
+        res.sendStatus(201);
+    }else {
+        res.sendStatus(400);
+    }
 })
 
 app.listen(port);

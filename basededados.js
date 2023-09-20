@@ -103,6 +103,34 @@ async function enviarDocumento (tramitacaoDoc){
     await cliente.query(sql, valores);
 }
 
+//Função em desenvolvimento
+async function enviarDocumentoRegra (tramitacaoDoc){
+    const cliente = await connect();
+   
+    const res = await cliente.query("select now()");
+    const horaEnvio = res.rows[0].now;
+
+    const sqlPrimeiroRegistro = "SELECT * FROM \"TramitacaoDocumento\" WHERE documento_id = $1";
+    const valoresPrimeiroRegistro = [tramitacaoDoc.documento_id];
+    const resultadoPrimeiroRegistro = await cliente.query(sqlPrimeiroRegistro, valoresPrimeiroRegistro);
+
+    const sqlRecebido = "SELECT * FROM \"TramitacaoDocumento\" WHERE documento_id = $1 AND setor_recebe_id IS NOT NULL";
+    const valoresRecebido = [tramitacaoDoc.documento_id];
+    const resultadoRecebido = await cliente.query(sqlRecebido, valoresRecebido);
+    
+
+    if (resultadoPrimeiroRegistro.rows == 0 | resultadoRecebido.rows != 0){
+        const sql = "INSERT INTO \"TramitacaoDocumento\" (documento_id, setor_envio_id, \"dataHoraEnvio\") VALUES ($1, $2, $3)";
+        const valores = [tramitacaoDoc.documento_id, tramitacaoDoc.setor_envio_id, horaEnvio];
+        await cliente.query(sql, valores);
+        return true;
+    }else{
+        return false;
+    }
+    
+    
+}
+
 async function receberDocumento (tramitacaoDoc){
     const cliente = await connect();
    
@@ -110,7 +138,7 @@ async function receberDocumento (tramitacaoDoc){
     const data = res.rows[0].now;
     
     const sql = "INSERT INTO \"TramitacaoDocumento\" (documento_id, setor_envio_id, \"dataHoraEnvio\", setor_recebe_id, \"dataHoraRecebimento\") VALUES ($1, $2, $3, $4, $5)";
-    const valores = [tramitacaoDoc.documento_id, tramitacaoDoc.setor_envio_id, data, tramitacaoDoc.setor_recebe_id, data];
+    const valores = [tramitacaoDoc.documento_id, tramitacaoDoc.setor_envio_id, tramitacaoDoc.dataHoraEnvio, tramitacaoDoc.setor_recebe_id, data];
     await cliente.query(sql, valores);
 }
 
@@ -134,5 +162,6 @@ module.exports = {
     deletarDocumento,
     enviarDocumento,
     receberDocumento,
-    listarTramitacaoDocumento
+    listarTramitacaoDocumento,
+    enviarDocumentoRegra
 }
